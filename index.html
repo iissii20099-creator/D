@@ -8,7 +8,7 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       background: #0f172a;
       color: white;
     }
@@ -17,20 +17,20 @@
       padding: 20px;
       background: #111827;
       text-align: center;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
     }
 
     th, td {
-      padding: 12px;
+      padding: 10px;
       border-bottom: 1px solid #1f2937;
       text-align: center;
+      font-size: 14px;
     }
 
     th {
@@ -41,15 +41,8 @@
       background: #111827;
     }
 
-    .won {
-      color: #22c55e;
-      font-weight: bold;
-    }
-
-    .lost {
-      color: #ef4444;
-      font-weight: bold;
-    }
+    .won { color: #22c55e; font-weight: bold; }
+    .lost { color: #ef4444; font-weight: bold; }
   </style>
 </head>
 
@@ -61,56 +54,64 @@
   <thead>
     <tr>
       <th>الشركة</th>
-      <th>نوع العقد</th>
-      <th>سعر الدخول</th>
-      <th>سعر التنفيذ</th>
-      <th>أعلى سعر</th>
-      <th>النسبة</th>
-      <th>التاريخ</th>
-      <th>الحالة</th>
+      <th>نوع</th>
+      <th>دخول</th>
+      <th>سعر</th>
+      <th>أعلى</th>
+      <th>%</th>
+      <th>تاريخ</th>
+      <th>حالة</th>
     </tr>
   </thead>
-  <tbody id="dataBody"></tbody>
+  <tbody id="body"></tbody>
 </table>
 
 <script>
-function getData() {
+function decodeShared() {
   const params = new URLSearchParams(window.location.search);
   const shared = params.get("shared");
 
   if (!shared) return [];
 
   try {
-    const decoded = decodeURIComponent(shared);
-    return JSON.parse(decoded);
+    // المرحلة 1: فك الترميز
+    const decodedURI = decodeURIComponent(shared);
+
+    // المرحلة 2: base64 decode
+    const jsonString = atob(decodedURI);
+
+    // المرحلة 3: تحويل إلى JSON
+    const data = JSON.parse(jsonString);
+
+    return Array.isArray(data) ? data : [];
   } catch (e) {
-    console.log("خطأ في قراءة البيانات", e);
+    console.log("خطأ في فك البيانات:", e);
     return [];
   }
 }
 
 function render() {
-  const data = getData();
-  const body = document.getElementById("dataBody");
+  const data = decodeShared();
+  const body = document.getElementById("body");
 
   body.innerHTML = "";
 
   data.forEach(item => {
     const row = document.createElement("tr");
 
-    const statusClass =
-      item.status && item.status.includes("won") ? "won" :
-      item.status && item.status.includes("lost") ? "lost" : "";
+    const status =
+      item.status === "won" ? "won" :
+      item.status === "lost" ? "lost" : "";
 
     row.innerHTML = `
-      <td>${item.companyName || "-"}</td>
-      <td>${item.contractType || "-"}</td>
-      <td>${item.entryPrice || "-"}</td>
-      <td>${item.strikePrice || "-"}</td>
-      <td>${item.highestPrice || "-"}</td>
+      <td>${item.companyName ?? "-"}</td>
+      <td>${item.contractType ?? "-"}</td>
+      <td>${item.entryPrice ?? "-"}</td>
+      <td>${item.strikePrice ?? "-"}</td>
+      <td>${item.highestPrice ?? "-"}</td>
       <td>${item.achievedPercent ? item.achievedPercent.toFixed(2) + "%" : "-"}</td>
-      <td>${item.date || "-"}</td>
-      <td class="${statusClass}">${item.status || "-"}</td>
+      <td>${item.date ?? "-"}</td>
+      <td class="${status}">${item.status ?? "-"}</td>
     `;
 
     body.appendChild(row);
@@ -121,4 +122,5 @@ render();
 </script>
 
 </body>
+</html>
 </html>
